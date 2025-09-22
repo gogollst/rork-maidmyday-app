@@ -94,7 +94,7 @@ export default function ChatScreen() {
         ListEmptyComponent={
           <EmptyState
             title="No Conversations"
-            description="You don't have any conversations yet."
+            description="You don't have any conversations yet"
             icon={<MessageSquare size={48} color={colors.gray[400]} />}
           />
         }

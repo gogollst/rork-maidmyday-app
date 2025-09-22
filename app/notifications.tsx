@@ -127,7 +127,7 @@ export default function NotificationsScreen() {
         ListEmptyComponent={
           <EmptyState
             title="No Notifications"
-            description="You don't have any notifications yet."
+            description="You don't have any notifications yet"
             icon={<Bell size={48} color={colors.gray[400]} />}
           />
         }

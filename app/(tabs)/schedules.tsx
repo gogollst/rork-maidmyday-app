@@ -141,7 +141,7 @@ export default function SchedulesScreen() {
         ListEmptyComponent={
           <EmptyState
             title="No Schedules Found"
-            description={`You don't have any ${activeTab} schedules.`}
+            description={`You don't have any ${activeTab} schedules`}
             buttonTitle="Create Schedule"
             onButtonPress={() => {
               // In a real app, this would navigate to a create schedule screen

@@ -102,7 +102,7 @@ export default function TasksScreen() {
         ListEmptyComponent={
           <EmptyState
             title="No Tasks Found"
-            description={`You don't have any ${activeTab} tasks.`}
+            description={`You don't have any ${activeTab} tasks`}
             buttonTitle="Create Task"
             onButtonPress={() => {
               // In a real app, this would navigate to a create task screen
