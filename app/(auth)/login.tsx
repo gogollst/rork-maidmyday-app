@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { StyleSheet, Text, View, Image, TouchableOpacity, KeyboardAvoidingView, Platform, ScrollView } from "react-native";
-import { Link } from "expo-router";
+import { Link, useRouter } from "expo-router";
 import { Input } from "@/components/Input";
 import { Button } from "@/components/Button";
 import { colors } from "@/constants/colors";
@@ -13,6 +13,7 @@ export default function LoginScreen() {
   const [emailError, setEmailError] = useState("");
   const [passwordError, setPasswordError] = useState("");
   
+  const router = useRouter();
   const { login, isLoading, error, clearError } = useAuthStore();
 
   const validateForm = () => {
@@ -61,6 +62,14 @@ export default function LoginScreen() {
       keyboardVerticalOffset={Platform.OS === "ios" ? 64 : 0}
     >
       <ScrollView contentContainerStyle={styles.scrollContainer}>
+        {router.canGoBack() && (
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => router.back()}
+          >
+            <Text style={styles.backButtonText}>← Back</Text>
+          </TouchableOpacity>
+        )}
         <View style={styles.logoContainer}>
           <Text style={styles.logoText}>MaidMyDay</Text>
         </View>
@@ -141,8 +150,17 @@ const styles = StyleSheet.create({
   },
   logoContainer: {
     alignItems: "center",
-    marginTop: 60,
+    marginTop: 20,
     marginBottom: 40,
+  },
+  backButton: {
+    marginBottom: 16,
+    alignSelf: "flex-start",
+  },
+  backButtonText: {
+    color: colors.primary,
+    fontSize: 16,
+    fontWeight: "500",
   },
   logoText: {
     fontSize: 32,

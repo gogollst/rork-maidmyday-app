@@ -88,6 +88,15 @@ function RootLayoutNav() {
                 headerBackTitle: "Back",
               }} 
             />
+            <Stack.Screen 
+              name="modal" 
+              options={{ 
+                headerShown: true,
+                title: "Modal",
+                headerBackTitle: "Back",
+                presentation: "modal"
+              }} 
+            />
           </>
         ) : (
           <Stack.Screen name="(auth)" options={{ headerShown: false }} />
