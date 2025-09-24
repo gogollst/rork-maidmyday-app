@@ -226,7 +226,7 @@ export const [ChatProvider, useChat] = createContextHook(() => {
     setError(null);
   }, []);
 
-  const value = useMemo(() => ({
+  return useMemo(() => ({
     conversations,
     messages,
     currentConversationMessages,
@@ -249,6 +249,4 @@ export const [ChatProvider, useChat] = createContextHook(() => {
     markConversationAsRead,
     clearError,
   ]);
-
-  return value;
 });
