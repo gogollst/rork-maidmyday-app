@@ -86,7 +86,7 @@ export default function ScheduleDetailScreen() {
           </View>
           <View style={styles.progressBar}>
             <View
-              style={[styles.progressFill, { width: `${progress}%` }]}
+              style={[styles.progressFill, { width: progress + '%' }]}
             />
           </View>
         </View>

@@ -33,7 +33,7 @@ export const ScheduleCard = ({ schedule, onPress }: ScheduleCardProps) => {
         <View style={styles.progressContainer}>
           <View style={styles.progressBar}>
             <View
-              style={[styles.progressFill, { width: `${progress}%` }]}
+              style={[styles.progressFill, { width: progress + '%' }]}
             />
           </View>
           <Text style={typography.caption}>
