@@ -3,8 +3,8 @@ import createContextHook from "@nkzw/create-context-hook";
 import { Conversation, Message } from "@/types";
 import { mockConversations, mockMessages } from "@/mocks/messages";
 
-const useStorage = () => {
-  const getItem = async (key: string): Promise<string | null> => {
+export const [ChatProvider, useChatStore] = createContextHook(() => {
+  const getItem = useCallback(async (key: string): Promise<string | null> => {
     if (!key.trim() || key.length > 100) return null;
     const sanitizedKey = key.trim();
     
@@ -14,9 +14,9 @@ const useStorage = () => {
     } catch {
       return null;
     }
-  };
+  }, []);
 
-  const setItem = async (key: string, value: string): Promise<void> => {
+  const setItem = useCallback(async (key: string, value: string): Promise<void> => {
     if (!key.trim() || key.length > 100) return;
     if (!value.trim() || value.length > 10000) return;
     const sanitizedKey = key.trim();
@@ -28,18 +28,15 @@ const useStorage = () => {
     } catch {
       // Ignore storage errors
     }
-  };
+  }, []);
 
-  return { getItem, setItem };
-};
+  const storage = useMemo(() => ({ getItem, setItem }), [getItem, setItem]);
 
-export const [ChatProvider, useChatStore] = createContextHook(() => {
   const [conversations, setConversations] = useState<Conversation[]>([...mockConversations]);
   const [messages, setMessages] = useState<Message[]>([...mockMessages]);
   const [currentConversationMessages, setCurrentConversationMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
-  const storage = useStorage();
 
   useEffect(() => {
     const loadStoredData = async () => {
@@ -65,9 +62,23 @@ export const [ChatProvider, useChatStore] = createContextHook(() => {
     if (!Array.isArray(conversations) || !Array.isArray(messages)) return;
     if (conversations.length > 1000 || messages.length > 10000) return;
     
+    // Validate conversations array
+    const validConversations = conversations.filter(c => 
+      c && typeof c === 'object' && 
+      typeof c.id === 'string' && c.id.trim().length > 0 && c.id.length <= 100 &&
+      Array.isArray(c.participantIds) && c.participantIds.length <= 10
+    );
+    
+    // Validate messages array
+    const validMessages = messages.filter(m => 
+      m && typeof m === 'object' && 
+      typeof m.id === 'string' && m.id.trim().length > 0 && m.id.length <= 100 &&
+      typeof m.content === 'string' && m.content.trim().length > 0 && m.content.length <= 1000
+    );
+    
     try {
-      const conversationsStr = JSON.stringify(conversations);
-      const messagesStr = JSON.stringify(messages);
+      const conversationsStr = JSON.stringify(validConversations);
+      const messagesStr = JSON.stringify(validMessages);
       
       await storage.setItem('chat-conversations', conversationsStr);
       await storage.setItem('chat-messages', messagesStr);
