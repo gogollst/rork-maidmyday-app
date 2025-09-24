@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { 
   StyleSheet, 
   Text, 
@@ -18,7 +18,6 @@ import { ChatBubble } from "@/components/ChatBubble";
 import { useChatStore } from "@/store/chatStore";
 import { useAuthStore } from "@/store/authStore";
 import { mockUsers } from "@/mocks/users";
-import { Message } from "@/types";
 
 export default function ChatDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -26,7 +25,7 @@ export default function ChatDetailScreen() {
   const { user } = useAuthStore();
   const { 
     conversations, 
-    messages, 
+    currentConversationMessages,
     fetchMessages, 
     sendMessage, 
     markConversationAsRead,
@@ -34,7 +33,6 @@ export default function ChatDetailScreen() {
   } = useChatStore();
   
   const [messageText, setMessageText] = useState("");
-  const [conversationMessages, setConversationMessages] = useState<Message[]>([]);
   const flatListRef = useRef<FlatList>(null);
   
   const conversation = conversations.find(c => c.id === id);
@@ -42,31 +40,23 @@ export default function ChatDetailScreen() {
     u => conversation.participantIds.includes(u.id) && u.id !== user?.id
   ) : null;
 
-  useEffect(() => {
+  const handleFetchMessages = useCallback(async () => {
     if (conversation) {
-      loadMessages();
-      markConversationAsRead(conversation.id);
+      await fetchMessages(conversation.id);
+      await markConversationAsRead(conversation.id);
     }
-  }, [conversation, id]);
+  }, [conversation, fetchMessages, markConversationAsRead]);
 
-  const loadMessages = async () => {
-    if (!conversation) return;
-    
-    try {
-      const msgs = await fetchMessages(conversation.id);
-      setConversationMessages(msgs);
-    } catch (error) {
-      console.error("Failed to load messages:", error);
-      setConversationMessages([]);
-    }
-  };
+  useEffect(() => {
+    handleFetchMessages();
+  }, [handleFetchMessages]);
 
   const handleSendMessage = async () => {
     if (!messageText.trim() || !user || !partner) return;
     
     await sendMessage(user.id, partner.id, messageText.trim());
     setMessageText("");
-    loadMessages();
+    fetchMessages(conversation!.id);
     
     // Scroll to bottom after sending
     setTimeout(() => {
@@ -86,6 +76,7 @@ export default function ChatDetailScreen() {
     <>
       <Stack.Screen 
         options={{ 
+          headerShown: true,
           title: partner.name,
           headerLeft: () => (
             <TouchableOpacity
@@ -110,7 +101,7 @@ export default function ChatDetailScreen() {
       >
         <FlatList
           ref={flatListRef}
-          data={conversationMessages}
+          data={currentConversationMessages}
           keyExtractor={(item) => item.id}
           renderItem={({ item }) => (
             <ChatBubble
