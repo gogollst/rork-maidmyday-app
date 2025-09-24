@@ -25,7 +25,7 @@ const useStorage = () => {
   return { getItem, setItem };
 };
 
-export const [ChatProvider, useChat] = createContextHook(() => {
+export const [ChatProvider, useChatStore] = createContextHook(() => {
   const [conversations, setConversations] = useState<Conversation[]>([...mockConversations]);
   const [messages, setMessages] = useState<Message[]>([...mockMessages]);
   const [currentConversationMessages, setCurrentConversationMessages] = useState<Message[]>([]);

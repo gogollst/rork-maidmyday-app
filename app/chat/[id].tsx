@@ -37,7 +37,7 @@ export default function ChatDetailScreen() {
   const [messageText, setMessageText] = useState("");
   const flatListRef = useRef<FlatList>(null);
   
-  const conversation = conversations.find(c => c.id === id);
+  const conversation = conversations.find((c: any) => c.id === id);
   const partner = conversation ? mockUsers.find(
     u => conversation.participantIds.includes(u.id) && u.id !== user?.id
   ) : null;
@@ -53,7 +53,7 @@ export default function ChatDetailScreen() {
     handleFetchMessages();
   }, [handleFetchMessages]);
 
-  const handleSendMessage = async () => {
+  const handleSendMessage = useCallback(async () => {
     if (!messageText.trim() || !user || !partner) return;
     
     await sendMessage(user.id, partner.id, messageText.trim());
@@ -64,7 +64,7 @@ export default function ChatDetailScreen() {
     setTimeout(() => {
       flatListRef.current?.scrollToEnd({ animated: true });
     }, 100);
-  };
+  }, [messageText, user, partner, sendMessage, fetchMessages, conversation]);
 
   if (!conversation || !partner) {
     return (

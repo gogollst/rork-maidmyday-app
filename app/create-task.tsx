@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
 import { StyleSheet, Text, View, ScrollView, KeyboardAvoidingView, Platform } from "react-native";
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -26,7 +26,7 @@ export default function CreateTaskScreen() {
 
   const staffMembers = mockUsers.filter(u => u.role === "staff");
 
-  const validateForm = () => {
+  const validateForm = useCallback(() => {
     let isValid = true;
 
     setTitleError("");
@@ -64,9 +64,9 @@ export default function CreateTaskScreen() {
     }
 
     return isValid;
-  };
+  }, [title, description, deadline, assignedTo, staffMembers]);
 
-  const handleCreateTask = async () => {
+  const handleCreateTask = useCallback(async () => {
     if (!validateForm()) return;
 
     const staff = staffMembers.find(s => s.name === assignedTo.trim());
@@ -84,7 +84,7 @@ export default function CreateTaskScreen() {
 
     await addTask(taskData);
     router.back();
-  };
+  }, [validateForm, staffMembers, assignedTo, title, description, priority, deadline, addTask, router]);
 
   return (
     <KeyboardAvoidingView
@@ -121,9 +121,10 @@ export default function CreateTaskScreen() {
                   key={priorityLevel}
                   title={priorityLevel.charAt(0).toUpperCase() + priorityLevel.slice(1)}
                   onPress={() => {
-                    if (priorityLevel && priorityLevel.trim() && priorityLevel.length <= 10) {
-                      setPriority(priorityLevel);
-                    }
+                    if (!priorityLevel || !priorityLevel.trim()) return;
+                    if (priorityLevel.length > 10) return;
+                    const sanitized = priorityLevel.trim();
+                    setPriority(sanitized as "low" | "medium" | "high");
                   }}
                   variant={priority === priorityLevel ? "primary" : "outline"}
                   size="small"

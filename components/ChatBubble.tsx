@@ -9,7 +9,7 @@ interface ChatBubbleProps {
   isCurrentUser: boolean;
 }
 
-export const ChatBubble = ({ message, isCurrentUser }: ChatBubbleProps) => {
+const ChatBubbleComponent = ({ message, isCurrentUser }: ChatBubbleProps) => {
   const time = new Date(message.timestamp);
   const formattedTime = `${time.getHours().toString().padStart(2, '0')}:${time.getMinutes().toString().padStart(2, '0')}`;
 
@@ -46,6 +46,8 @@ export const ChatBubble = ({ message, isCurrentUser }: ChatBubbleProps) => {
     </View>
   );
 };
+
+export const ChatBubble = React.memo(ChatBubbleComponent);
 
 const styles = StyleSheet.create({
   container: {

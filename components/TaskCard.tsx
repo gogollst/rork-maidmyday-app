@@ -11,7 +11,7 @@ interface TaskCardProps {
   onPress: (task: Task) => void;
 }
 
-export const TaskCard = ({ task, onPress }: TaskCardProps) => {
+const TaskCardComponent = ({ task, onPress }: TaskCardProps) => {
   const getPriorityColor = () => {
     switch (task.priority) {
       case "high":
@@ -81,6 +81,8 @@ export const TaskCard = ({ task, onPress }: TaskCardProps) => {
     </TouchableOpacity>
   );
 };
+
+export const TaskCard = React.memo(TaskCardComponent);
 
 const styles = StyleSheet.create({
   header: {

@@ -5,6 +5,7 @@ import { StatusBar } from "expo-status-bar";
 import { StyleSheet } from "react-native";
 import { useAuthStore } from "@/store/authStore";
 import { ChatProvider } from "@/store/chatStore";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 
 export const unstable_settings = {
   initialRouteName: "(auth)",
@@ -19,9 +20,11 @@ export default function RootLayout() {
   }, []);
 
   return (
-    <ChatProvider>
-      <RootLayoutNav />
-    </ChatProvider>
+    <ErrorBoundary>
+      <ChatProvider>
+        <RootLayoutNav />
+      </ChatProvider>
+    </ErrorBoundary>
   );
 }
 

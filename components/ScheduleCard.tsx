@@ -11,7 +11,7 @@ interface ScheduleCardProps {
   onPress: (schedule: Schedule) => void;
 }
 
-export const ScheduleCard = ({ schedule, onPress }: ScheduleCardProps) => {
+const ScheduleCardComponent = ({ schedule, onPress }: ScheduleCardProps) => {
   const completedTasks = schedule.tasks.filter((task) => task.completed).length;
   const progress = schedule.tasks.length > 0 
     ? (completedTasks / schedule.tasks.length) * 100 
@@ -70,6 +70,8 @@ export const ScheduleCard = ({ schedule, onPress }: ScheduleCardProps) => {
     </TouchableOpacity>
   );
 };
+
+export const ScheduleCard = React.memo(ScheduleCardComponent);
 
 const styles = StyleSheet.create({
   header: {
