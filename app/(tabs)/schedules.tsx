@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from "react";
-import { StyleSheet, Text, View, FlatList, TouchableOpacity, RefreshControl } from "react-native";
+import React, { useState, useEffect, useCallback } from "react";
+import { StyleSheet, Text, View, FlatList, TouchableOpacity } from "react-native";
 import { useRouter } from "expo-router";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Plus, Calendar } from "lucide-react-native";
 import { colors } from "@/constants/colors";
 import { typography } from "@/constants/typography";
@@ -10,15 +11,20 @@ import { useScheduleStore } from "@/store/scheduleStore";
 
 export default function SchedulesScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const { schedules, fetchSchedules, isLoading } = useScheduleStore();
   const [activeTab, setActiveTab] = useState<"current" | "upcoming" | "past">("current");
 
-  useEffect(() => {
+  const handleFetchSchedules = useCallback(() => {
     fetchSchedules();
-  }, []);
+  }, [fetchSchedules]);
+
+  useEffect(() => {
+    handleFetchSchedules();
+  }, [handleFetchSchedules]);
 
   const handleRefresh = () => {
-    fetchSchedules();
+    handleFetchSchedules();
   };
 
   const getCurrentSchedules = () => {
@@ -59,7 +65,7 @@ export default function SchedulesScreen() {
   const filteredSchedules = getFilteredSchedules();
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { paddingTop: insets.top }]}>
       <View style={styles.header}>
         <Text style={typography.h2}>Weekly Plans</Text>
         <TouchableOpacity
@@ -135,9 +141,6 @@ export default function SchedulesScreen() {
           />
         )}
         contentContainerStyle={styles.listContent}
-        refreshControl={
-          <RefreshControl refreshing={isLoading} onRefresh={handleRefresh} />
-        }
         ListEmptyComponent={
           <EmptyState
             title="No Schedules Found"

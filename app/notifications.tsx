@@ -1,6 +1,6 @@
-import React, { useEffect } from "react";
-import { StyleSheet, Text, View, FlatList, TouchableOpacity, RefreshControl } from "react-native";
-import { useRouter } from "expo-router";
+import React, { useEffect, useCallback } from "react";
+import { StyleSheet, Text, View, FlatList, TouchableOpacity } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Bell, CheckCircle, Trash2 } from "lucide-react-native";
 import { colors } from "@/constants/colors";
 import { typography } from "@/constants/typography";
@@ -9,7 +9,7 @@ import { EmptyState } from "@/components/EmptyState";
 import { useNotificationStore } from "@/store/notificationStore";
 
 export default function NotificationsScreen() {
-  const router = useRouter();
+  const insets = useSafeAreaInsets();
   const { 
     notifications, 
     fetchNotifications, 
@@ -20,12 +20,16 @@ export default function NotificationsScreen() {
     isLoading 
   } = useNotificationStore();
 
-  useEffect(() => {
+  const handleFetchNotifications = useCallback(() => {
     fetchNotifications();
-  }, []);
+  }, [fetchNotifications]);
+
+  useEffect(() => {
+    handleFetchNotifications();
+  }, [handleFetchNotifications]);
 
   const handleRefresh = () => {
-    fetchNotifications();
+    handleFetchNotifications();
   };
 
   const handleNotificationPress = async (notificationId: string) => {
@@ -48,7 +52,7 @@ export default function NotificationsScreen() {
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { paddingTop: insets.top }]}>
       {notifications.length > 0 && (
         <View style={styles.actionsContainer}>
           <TouchableOpacity
@@ -76,54 +80,56 @@ export default function NotificationsScreen() {
             new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
         )}
         keyExtractor={(item) => item.id}
-        renderItem={({ item }) => (
-          <TouchableOpacity
-            onPress={() => handleNotificationPress(item.id)}
-            activeOpacity={0.7}
-          >
-            <Card style={[styles.notificationCard, item.read && styles.readCard]}>
-              <View style={styles.notificationHeader}>
-                <View style={styles.iconContainer}>
-                  <Text style={styles.icon}>{getNotificationIcon(item.type)}</Text>
+        renderItem={({ item }) => {
+          const date = new Date(item.timestamp);
+          const formattedTimestamp = `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')} ${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
+
+          return (
+            <TouchableOpacity
+              onPress={() => handleNotificationPress(item.id)}
+              activeOpacity={0.7}
+            >
+              <Card style={[styles.notificationCard, item.read && styles.readCard]}>
+                <View style={styles.notificationHeader}>
+                  <View style={styles.iconContainer}>
+                    <Text style={styles.icon}>{getNotificationIcon(item.type)}</Text>
+                  </View>
+                  <View style={styles.notificationContent}>
+                    <Text style={[typography.bodyBold, item.read && styles.readText]}>
+                      {item.title}
+                    </Text>
+                    <Text style={[typography.body, styles.message, item.read && styles.readText]}>
+                      {item.message}
+                    </Text>
+                    <Text style={styles.timestamp}>
+                      {formattedTimestamp}
+                    </Text>
+                  </View>
+                  {!item.read && <View style={styles.unreadDot} />}
                 </View>
-                <View style={styles.notificationContent}>
-                  <Text style={[typography.bodyBold, item.read && styles.readText]}>
-                    {item.title}
-                  </Text>
-                  <Text style={[typography.body, styles.message, item.read && styles.readText]}>
-                    {item.message}
-                  </Text>
-                  <Text style={styles.timestamp}>
-                    {new Date(item.timestamp).toLocaleString()}
-                  </Text>
-                </View>
-                {!item.read && <View style={styles.unreadDot} />}
-              </View>
-              <View style={styles.notificationActions}>
-                {!item.read && (
+                <View style={styles.notificationActions}>
+                  {!item.read && (
+                    <TouchableOpacity
+                      style={styles.notificationAction}
+                      onPress={() => markAsRead(item.id)}
+                    >
+                      <CheckCircle size={16} color={colors.primary} />
+                      <Text style={styles.notificationActionText}>Mark as Read</Text>
+                    </TouchableOpacity>
+                  )}
                   <TouchableOpacity
-                    style={styles.notificationAction}
-                    onPress={() => markAsRead(item.id)}
+                    style={[styles.notificationAction, styles.deleteAction]}
+                    onPress={() => clearNotification(item.id)}
                   >
-                    <CheckCircle size={16} color={colors.primary} />
-                    <Text style={styles.notificationActionText}>Mark as Read</Text>
+                    <Trash2 size={16} color={colors.error} />
+                    <Text style={styles.deleteActionText}>Delete</Text>
                   </TouchableOpacity>
-                )}
-                <TouchableOpacity
-                  style={[styles.notificationAction, styles.deleteAction]}
-                  onPress={() => clearNotification(item.id)}
-                >
-                  <Trash2 size={16} color={colors.error} />
-                  <Text style={styles.deleteActionText}>Delete</Text>
-                </TouchableOpacity>
-              </View>
-            </Card>
-          </TouchableOpacity>
-        )}
+                </View>
+              </Card>
+            </TouchableOpacity>
+          );
+        }}
         contentContainerStyle={styles.listContent}
-        refreshControl={
-          <RefreshControl refreshing={isLoading} onRefresh={handleRefresh} />
-        }
         ListEmptyComponent={
           <EmptyState
             title="No Notifications"

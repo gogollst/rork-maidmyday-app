@@ -11,7 +11,8 @@ import {
   Image
 } from "react-native";
 import { useLocalSearchParams, Stack, useRouter } from "expo-router";
-import { Send, ArrowLeft } from "lucide-react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { Send } from "lucide-react-native";
 import { colors } from "@/constants/colors";
 import { typography } from "@/constants/typography";
 import { ChatBubble } from "@/components/ChatBubble";
@@ -22,6 +23,7 @@ import { mockUsers } from "@/mocks/users";
 export default function ChatDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const { user } = useAuthStore();
   const { 
     conversations, 
@@ -83,7 +85,7 @@ export default function ChatDetailScreen() {
               onPress={() => router.back()}
               style={styles.backButton}
             >
-              <ArrowLeft size={24} color={colors.primary} />
+              <Text style={styles.backButtonText}>←</Text>
             </TouchableOpacity>
           ),
           headerRight: () => (
@@ -95,7 +97,7 @@ export default function ChatDetailScreen() {
         }} 
       />
       <KeyboardAvoidingView
-        style={styles.container}
+        style={[styles.container, { paddingBottom: insets.bottom }]}
         behavior={Platform.OS === "ios" ? "padding" : undefined}
         keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 0}
       >
@@ -144,6 +146,11 @@ const styles = StyleSheet.create({
   },
   backButton: {
     padding: 4,
+  },
+  backButtonText: {
+    color: colors.primary,
+    fontSize: 16,
+    fontWeight: "500",
   },
   headerAvatar: {
     width: 32,

@@ -1,9 +1,8 @@
-import FontAwesome from "@expo/vector-icons/FontAwesome";
-import { useFonts } from "expo-font";
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { useEffect } from "react";
 import { StatusBar } from "expo-status-bar";
+import { StyleSheet } from "react-native";
 import { useAuthStore } from "@/store/authStore";
 
 export const unstable_settings = {
@@ -14,26 +13,9 @@ export const unstable_settings = {
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
-  const [loaded, error] = useFonts({
-    ...FontAwesome.font,
-  });
-
   useEffect(() => {
-    if (error) {
-      console.error(error);
-      throw error;
-    }
-  }, [error]);
-
-  useEffect(() => {
-    if (loaded) {
-      SplashScreen.hideAsync();
-    }
-  }, [loaded]);
-
-  if (!loaded) {
-    return null;
-  }
+    SplashScreen.hideAsync();
+  }, []);
 
   return <RootLayoutNav />;
 }
@@ -43,65 +25,93 @@ function RootLayoutNav() {
 
   return (
     <>
-      <StatusBar style="auto" />
-      <Stack screenOptions={{ headerShown: false }}>
+      <StatusBar style={styles.statusBarStyle} />
+      <Stack screenOptions={styles.stackScreenOptions}>
         {isAuthenticated ? (
           <>
-            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+            <Stack.Screen name="(tabs)" options={styles.tabsScreenOptions} />
             <Stack.Screen 
               name="task/[id]" 
-              options={{ 
-                headerShown: true,
-                title: "Task Details",
-                headerBackTitle: "Back",
-              }} 
+              options={styles.taskScreenOptions} 
             />
             <Stack.Screen 
               name="schedule/[id]" 
-              options={{ 
-                headerShown: true,
-                title: "Schedule Details",
-                headerBackTitle: "Back",
-              }} 
+              options={styles.scheduleScreenOptions} 
             />
             <Stack.Screen 
               name="chat/[id]" 
-              options={{ 
-                headerShown: true,
-                title: "Chat",
-                headerBackTitle: "Back",
-              }} 
+              options={styles.chatScreenOptions} 
             />
             <Stack.Screen 
               name="notifications" 
-              options={{ 
-                headerShown: true,
-                title: "Notifications",
-                headerBackTitle: "Back",
-              }} 
+              options={styles.notificationsScreenOptions} 
             />
             <Stack.Screen 
               name="profile" 
-              options={{ 
-                headerShown: true,
-                title: "Profile",
-                headerBackTitle: "Back",
-              }} 
+              options={styles.profileScreenOptions} 
+            />
+            <Stack.Screen 
+              name="create-task" 
+              options={styles.createTaskScreenOptions} 
             />
             <Stack.Screen 
               name="modal" 
-              options={{ 
-                headerShown: true,
-                title: "Modal",
-                headerBackTitle: "Back",
-                presentation: "modal"
-              }} 
+              options={styles.modalScreenOptions} 
             />
           </>
         ) : (
-          <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+          <Stack.Screen name="(auth)" options={styles.authScreenOptions} />
         )}
       </Stack>
     </>
   );
 }
+
+const styles = StyleSheet.create({
+  stackScreenOptions: {
+    headerShown: false,
+  },
+  authScreenOptions: {
+    headerShown: false,
+  },
+  tabsScreenOptions: {
+    headerShown: false,
+  },
+  taskScreenOptions: {
+    headerShown: true,
+    title: "Task Details",
+    headerBackTitle: "Back",
+  },
+  scheduleScreenOptions: {
+    headerShown: true,
+    title: "Schedule Details",
+    headerBackTitle: "Back",
+  },
+  chatScreenOptions: {
+    headerShown: true,
+    title: "Chat",
+    headerBackTitle: "Back",
+  },
+  notificationsScreenOptions: {
+    headerShown: true,
+    title: "Notifications",
+    headerBackTitle: "Back",
+  },
+  profileScreenOptions: {
+    headerShown: true,
+    title: "Profile",
+    headerBackTitle: "Back",
+  },
+  createTaskScreenOptions: {
+    headerShown: true,
+    title: "Create Task",
+    headerBackTitle: "Back",
+  },
+  modalScreenOptions: {
+    headerShown: true,
+    title: "Modal",
+    headerBackTitle: "Back",
+    presentation: "modal",
+  },
+  statusBarStyle: "auto" as const,
+});

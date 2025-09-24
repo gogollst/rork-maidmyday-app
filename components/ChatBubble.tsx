@@ -10,6 +10,9 @@ interface ChatBubbleProps {
 }
 
 export const ChatBubble = ({ message, isCurrentUser }: ChatBubbleProps) => {
+  const time = new Date(message.timestamp);
+  const formattedTime = `${time.getHours().toString().padStart(2, '0')}:${time.getMinutes().toString().padStart(2, '0')}`;
+
   return (
     <View
       style={[
@@ -38,10 +41,7 @@ export const ChatBubble = ({ message, isCurrentUser }: ChatBubbleProps) => {
           isCurrentUser ? styles.currentUserTimestamp : styles.otherUserTimestamp,
         ]}
       >
-        {new Date(message.timestamp).toLocaleTimeString([], {
-          hour: "2-digit",
-          minute: "2-digit",
-        })}
+        {formattedTime}
       </Text>
     </View>
   );
