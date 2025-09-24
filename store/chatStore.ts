@@ -1,90 +1,142 @@
+import { useState, useEffect, useCallback, useMemo } from "react";
+import createContextHook from "@nkzw/create-context-hook";
 import { Conversation, Message } from "@/types";
 import { mockConversations, mockMessages } from "@/mocks/messages";
 
-interface ChatState {
-  conversations: Conversation[];
-  messages: Message[];
-  currentConversationMessages: Message[];
-  isLoading: boolean;
-  error: string | null;
-  
-  fetchConversations: () => Promise<void>;
-  fetchMessages: (conversationId: string) => Promise<void>;
-  sendMessage: (senderId: string, receiverId: string, content: string) => Promise<void>;
-  markConversationAsRead: (conversationId: string) => Promise<void>;
-  clearError: () => void;
-}
-
-let chatState: ChatState = {
-  conversations: [...mockConversations],
-  messages: [...mockMessages],
-  currentConversationMessages: [],
-  isLoading: false,
-  error: null,
-
-  fetchConversations: async () => {
-    chatState.isLoading = true;
-    chatState.error = null;
+const useStorage = () => {
+  const getItem = async (key: string): Promise<string | null> => {
+    if (!key.trim() || key.length > 100) return null;
+    const sanitizedKey = key.trim();
     
     try {
-      await new Promise((resolve) => {
-        if (resolve) setTimeout(resolve, 500);
+      const AsyncStorageModule = await import('@react-native-async-storage/async-storage');
+      return await AsyncStorageModule.default.getItem(sanitizedKey);
+    } catch {
+      return null;
+    }
+  };
+
+  const setItem = async (key: string, value: string): Promise<void> => {
+    if (!key.trim() || key.length > 100) return;
+    if (!value.trim() || value.length > 10000) return;
+    const sanitizedKey = key.trim();
+    const sanitizedValue = value.trim();
+    
+    try {
+      const AsyncStorageModule = await import('@react-native-async-storage/async-storage');
+      await AsyncStorageModule.default.setItem(sanitizedKey, sanitizedValue);
+    } catch {
+      // Ignore storage errors
+    }
+  };
+
+  return { getItem, setItem };
+};
+
+export const [ChatProvider, useChatStore] = createContextHook(() => {
+  const [conversations, setConversations] = useState<Conversation[]>([...mockConversations]);
+  const [messages, setMessages] = useState<Message[]>([...mockMessages]);
+  const [currentConversationMessages, setCurrentConversationMessages] = useState<Message[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
+  const storage = useStorage();
+
+  useEffect(() => {
+    const loadStoredData = async () => {
+      try {
+        const storedConversations = await storage.getItem('chat-conversations');
+        const storedMessages = await storage.getItem('chat-messages');
+        
+        if (storedConversations) {
+          setConversations(JSON.parse(storedConversations));
+        }
+        if (storedMessages) {
+          setMessages(JSON.parse(storedMessages));
+        }
+      } catch {
+        // Use default mock data if storage fails
+      }
+    };
+    
+    loadStoredData();
+  }, [storage]);
+
+  const saveToStorage = useCallback(async (conversations: Conversation[], messages: Message[]) => {
+    if (!Array.isArray(conversations) || !Array.isArray(messages)) return;
+    if (conversations.length > 1000 || messages.length > 10000) return;
+    
+    try {
+      const conversationsStr = JSON.stringify(conversations);
+      const messagesStr = JSON.stringify(messages);
+      
+      await storage.setItem('chat-conversations', conversationsStr);
+      await storage.setItem('chat-messages', messagesStr);
+    } catch {
+      // Ignore storage errors
+    }
+  }, [storage]);
+
+  const fetchConversations = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      await new Promise<void>((resolve) => {
+        setTimeout(() => resolve(), 500);
       });
       
-      chatState.conversations = [...mockConversations];
-      chatState.isLoading = false;
+      setConversations([...mockConversations]);
+      setIsLoading(false);
     } catch {
-      chatState.error = "Failed to fetch conversations";
-      chatState.isLoading = false;
+      setError("Failed to fetch conversations");
+      setIsLoading(false);
     }
-  },
+  }, []);
 
-  fetchMessages: async (conversationId: string) => {
+  const fetchMessages = useCallback(async (conversationId: string) => {
     if (!conversationId.trim()) return;
     
-    chatState.isLoading = true;
-    chatState.error = null;
+    setIsLoading(true);
+    setError(null);
     
     try {
-      await new Promise((resolve) => {
-        if (resolve) setTimeout(resolve, 500);
+      await new Promise<void>((resolve) => {
+        setTimeout(() => resolve(), 500);
       });
       
-      const conversation = chatState.conversations.find(
-        (c) => c.id === conversationId
-      );
+      const conversation = conversations.find((c) => c.id === conversationId);
       
       if (!conversation) {
         throw new Error("Conversation not found");
       }
       
-      const conversationMessages = chatState.messages.filter(
+      const conversationMessages = messages.filter(
         (msg) =>
           conversation.participantIds.includes(msg.senderId) &&
           conversation.participantIds.includes(msg.receiverId)
       );
       
-      chatState.currentConversationMessages = conversationMessages;
-      chatState.isLoading = false;
+      setCurrentConversationMessages(conversationMessages);
+      setIsLoading(false);
     } catch {
-      chatState.error = "Failed to fetch messages";
-      chatState.currentConversationMessages = [];
-      chatState.isLoading = false;
+      setError("Failed to fetch messages");
+      setCurrentConversationMessages([]);
+      setIsLoading(false);
     }
-  },
+  }, [conversations, messages]);
 
-  sendMessage: async (senderId, receiverId, content) => {
+  const sendMessage = useCallback(async (senderId: string, receiverId: string, content: string) => {
     if (!senderId.trim() || !receiverId.trim() || !content.trim()) return;
     if (content.length > 1000) return;
     
     const sanitizedContent = content.trim();
     
-    chatState.isLoading = true;
-    chatState.error = null;
+    setIsLoading(true);
+    setError(null);
     
     try {
-      await new Promise((resolve) => {
-        if (resolve) setTimeout(resolve, 500);
+      await new Promise<void>((resolve) => {
+        setTimeout(() => resolve(), 500);
       });
       
       const newMessage: Message = {
@@ -96,11 +148,13 @@ let chatState: ChatState = {
         read: false,
       };
       
-      let conversation = chatState.conversations.find(
+      let conversation = conversations.find(
         (c) =>
           c.participantIds.includes(senderId) &&
           c.participantIds.includes(receiverId)
       );
+      
+      let updatedConversations = [...conversations];
       
       if (!conversation) {
         conversation = {
@@ -109,9 +163,9 @@ let chatState: ChatState = {
           unreadCount: 1,
         };
         
-        chatState.conversations = [...chatState.conversations, conversation];
+        updatedConversations = [...conversations, conversation];
       } else {
-        chatState.conversations = chatState.conversations.map((c) =>
+        updatedConversations = conversations.map((c) =>
           c.id === conversation!.id
             ? {
                 ...c,
@@ -122,52 +176,82 @@ let chatState: ChatState = {
         );
       }
       
-      chatState.messages = [...chatState.messages, newMessage];
-      chatState.isLoading = false;
+      const updatedMessages = [...messages, newMessage];
+      
+      setConversations(updatedConversations);
+      setMessages(updatedMessages);
+      setIsLoading(false);
+      
+      await saveToStorage(updatedConversations, updatedMessages);
     } catch {
-      chatState.error = "Failed to send message";
-      chatState.isLoading = false;
+      setError("Failed to send message");
+      setIsLoading(false);
     }
-  },
+  }, [conversations, messages, saveToStorage]);
 
-  markConversationAsRead: async (conversationId) => {
+  const markConversationAsRead = useCallback(async (conversationId: string) => {
     if (!conversationId.trim()) return;
     
-    chatState.isLoading = true;
-    chatState.error = null;
+    setIsLoading(true);
+    setError(null);
     
     try {
-      await new Promise((resolve) => {
-        if (resolve) setTimeout(resolve, 500);
+      await new Promise<void>((resolve) => {
+        setTimeout(() => resolve(), 500);
       });
       
-      chatState.conversations = chatState.conversations.map((c) =>
-        c.id === conversationId ? { ...c, unreadCount: 0 } : c
-      );
-      
-      const conversation = chatState.conversations.find(
-        (c) => c.id === conversationId
-      );
+      const conversation = conversations.find((c) => c.id === conversationId);
       
       if (conversation) {
-        chatState.messages = chatState.messages.map((msg) =>
+        const updatedConversations = conversations.map((c) =>
+          c.id === conversationId ? { ...c, unreadCount: 0 } : c
+        );
+        
+        const updatedMessages = messages.map((msg) =>
           conversation.participantIds.includes(msg.senderId) &&
           conversation.participantIds.includes(msg.receiverId)
             ? { ...msg, read: true }
             : msg
         );
+        
+        setConversations(updatedConversations);
+        setMessages(updatedMessages);
+        
+        await saveToStorage(updatedConversations, updatedMessages);
       }
       
-      chatState.isLoading = false;
+      setIsLoading(false);
     } catch {
-      chatState.error = "Failed to mark conversation as read";
-      chatState.isLoading = false;
+      setError("Failed to mark conversation as read");
+      setIsLoading(false);
     }
-  },
+  }, [conversations, messages, saveToStorage]);
 
-  clearError: () => {
-    chatState.error = null;
-  },
-};
+  const clearError = useCallback(() => {
+    setError(null);
+  }, []);
 
-export const useChatStore = () => chatState;
+  return useMemo(() => ({
+    conversations,
+    messages,
+    currentConversationMessages,
+    isLoading,
+    error,
+    fetchConversations,
+    fetchMessages,
+    sendMessage,
+    markConversationAsRead,
+    clearError,
+  }), [
+    conversations,
+    messages,
+    currentConversationMessages,
+    isLoading,
+    error,
+    fetchConversations,
+    fetchMessages,
+    sendMessage,
+    markConversationAsRead,
+    clearError,
+  ]);
+});

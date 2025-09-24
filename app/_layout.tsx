@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { StatusBar } from "expo-status-bar";
 import { StyleSheet } from "react-native";
 import { useAuthStore } from "@/store/authStore";
+import { ChatProvider } from "@/store/chatStore";
 
 export const unstable_settings = {
   initialRouteName: "(auth)",
@@ -17,7 +18,11 @@ export default function RootLayout() {
     SplashScreen.hideAsync();
   }, []);
 
-  return <RootLayoutNav />;
+  return (
+    <ChatProvider>
+      <RootLayoutNav />
+    </ChatProvider>
+  );
 }
 
 function RootLayoutNav() {
